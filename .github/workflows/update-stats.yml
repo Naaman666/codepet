@@ -1,0 +1,90 @@
+name: Update CodePet stats
+
+on:
+  schedule:
+    - cron: "0 20 * * *"   # minden nap 20:00 UTC = 22:00 CEST
+  workflow_dispatch:        # kézi indításhoz is
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch stats and write data.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_USER: ${{ github.repository_owner }}
+        run: |
+          python3 - <<'EOF'
+          import urllib.request, json, os, datetime
+
+          user  = os.environ["GH_USER"]
+          token = os.environ["GH_TOKEN"]
+          days  = 30
+
+          def gh(url):
+              req = urllib.request.Request(url, headers={
+                  "Authorization": f"Bearer {token}",
+                  "Accept": "application/vnd.github+json",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              })
+              with urllib.request.urlopen(req) as r:
+                  return json.loads(r.read())
+
+          events = gh(f"https://api.github.com/users/{user}/events?per_page=100")
+          since  = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+
+          push = [
+              e for e in events
+              if e["type"] == "PushEvent"
+              and datetime.datetime.fromisoformat(e["created_at"].replace("Z", "+00:00")) >= since
+          ]
+
+          commits = sum(len(e["payload"].get("commits", [])) for e in push)
+          repos   = len({e["repo"]["name"] for e in push})
+
+          day_set = {e["created_at"][:10] for e in push}
+          streak, d = 0, datetime.date.today()
+          for _ in range(365):
+              if d.isoformat() in day_set:
+                  streak += 1
+                  d -= datetime.timedelta(days=1)
+              else:
+                  break
+
+          top_lang = "?"
+          repo_names = list({e["repo"]["name"] for e in push})
+          if repo_names:
+              try:
+                  rd = gh(f"https://api.github.com/repos/{repo_names[0]}")
+                  top_lang = rd.get("language") or "?"
+              except Exception:
+                  pass
+
+          data = {
+              "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "user": user,
+              "window_days": days,
+              "commits": commits,
+              "streak": streak,
+              "repos": repos,
+              "top_lang": top_lang,
+          }
+
+          with open("data.json", "w") as f:
+              json.dump(data, f, indent=2)
+
+          print(json.dumps(data, indent=2))
+          EOF
+
+      - name: Commit data.json
+        run: |
+          git config user.name  "codepet-bot"
+          git config user.email "codepet-bot@users.noreply.github.com"
+          git add data.json
+          git diff --cached --quiet || git commit -m "chore: update codepet stats [skip ci]"
+          git push
