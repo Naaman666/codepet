@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BSR CodePet</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#f9f8f5; --bg2:#f1efe8; --bg3:#fff;
+    --txt:#1a1a1a; --txt2:#666; --txt3:#999;
+    --border:rgba(0,0,0,0.09); --border2:rgba(0,0,0,0.16);
+    --danger:#a32d2d;
+    --radius:12px; --radius-sm:8px;
+    --mono:'SF Mono','Fira Mono',monospace;
+  }
+  @media (prefers-color-scheme:dark) {
+    :root {
+      --bg:#1a1a1a; --bg2:#242424; --bg3:#2c2c2c;
+      --txt:#e8e6df; --txt2:#999; --txt3:#666;
+      --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+    }
+  }
+  body { background:var(--bg); color:var(--txt); font-family:var(--mono); min-height:100vh; display:flex; justify-content:center; padding:2rem 1rem; }
+  #app { width:100%; max-width:520px; }
+  h1 { font-size:13px; font-weight:500; letter-spacing:0.12em; color:var(--txt3); text-align:center; margin-bottom:1.5rem; }
+  .panel { background:var(--bg3); border:0.5px solid var(--border); border-radius:var(--radius); padding:1.25rem; margin-bottom:1rem; }
+  .sec { font-size:10px; color:var(--txt3); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:10px; }
+  .row { display:flex; gap:1rem; }
+  .col { flex:1; }
+  .stat-big { font-size:24px; font-weight:500; }
+  .stat-sub { font-size:11px; color:var(--txt2); margin-top:2px; }
+  .bar-bg { height:6px; background:var(--bg2); border-radius:3px; margin-top:8px; }
+  .bar-fill { height:100%; border-radius:3px; transition:width .7s ease; }
+  .xp-lbl { font-size:11px; color:var(--txt3); margin-top:4px; }
+  .stat-lines { font-size:12px; color:var(--txt2); line-height:2.1; }
+  .stat-lines b { color:var(--txt); font-weight:500; }
+  .mood { font-size:12px; color:var(--txt2); font-style:italic; margin-bottom:4px; }
+  .pname { font-size:18px; font-weight:500; margin-bottom:6px; }
+  .badge { display:inline-block; font-size:11px; padding:2px 12px; border-radius:20px; font-weight:500; margin-bottom:8px; }
+  .chip { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; border:0.5px solid var(--border2); color:var(--txt2); margin:2px 3px 2px 0; }
+  .tier-row { display:flex; align-items:center; gap:10px; padding:5px 0; border-bottom:0.5px solid var(--border); font-size:12px; }
+  .tier-row:last-child { border-bottom:none; }
+  .tier-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .updated { font-size:11px; color:var(--txt3); text-align:center; margin-top:.25rem; }
+  .loading { text-align:center; padding:3rem 0; font-size:13px; color:var(--txt3); }
+  canvas { image-rendering:pixelated; image-rendering:crisp-edges; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>// BSR CODEPET</h1>
+  <div id="root"><div class="loading">adatok betöltése…</div></div>
+</div>
+<script>
+const TIERS=[
+  {name:"Scrap",min:0,  col:"#888780",bg:"#F1EFE8",desc:"Törmelékből összerakva"},
+  {name:"Core", min:10, col:"#185FA5",bg:"#E6F1FB",desc:"Mag-processzor aktív"},
+  {name:"Forge",min:30, col:"#3B6D11",bg:"#EAF3DE",desc:"Rendszerek optimalizálva"},
+  {name:"Arc",  min:60, col:"#854F0B",bg:"#FAEEDA",desc:"Fejlett protokollok"},
+  {name:"Apex", min:100,col:"#534AB7",bg:"#EEEDFE",desc:"Teljes potenciál felszabadítva"},
+];
+const MOODS=[
+  {c:0, t:"Alvó üzemmódban… zzz"},
+  {c:5, t:"Feltöltöm az akkumulátort…"},
+  {c:15,t:"Rendszerek aktívak!"},
+  {c:30,t:"Turbó mód bekapcsolva!"},
+  {c:60,t:"APEX PROTOKOLL AKTÍV"},
+];
+const TRAITS=[
+  [],["kódszimatoló"],["kódszimatoló","hibavadász"],
+  ["kódszimatoló","hibavadász","refaktormester"],
+  ["kódszimatoló","hibavadász","refaktormester","timeline-architekt"],
+  ["kódszimatoló","hibavadász","refaktormester","timeline-architekt","APEX entitás"],
+];
+
+function getTier(c){for(let i=TIERS.length-1;i>=0;i--)if(c>=TIERS[i].min)return{t:TIERS[i],i};return{t:TIERS[0],i:0};}
+function getMood(c){let m=MOODS[0];for(let mo of MOODS)if(c>=mo.c)m=mo;return m;}
+
+function drawBot(cv,c){
+  const ctx=cv.getContext("2d"),S=128;
+  ctx.clearRect(0,0,S,S);
+  const{t,i}=getTier(c),ac=t.col;
+  const dark=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches;
+  const bc=dark?"#505050":"#c8c8c8",pc=dark?"#303030":"#aaa";
+  function px(x,y,w,h,col){ctx.fillStyle=col;ctx.fillRect(x,y,w,h);}
+  ctx.fillStyle="rgba(0,0,0,0.07)";ctx.beginPath();ctx.ellipse(64,115,24,5,0,0,Math.PI*2);ctx.fill();
+  px(44,94,14,20,bc);px(70,94,14,20,bc);
+  if(i>=2){px(44,110,14,4,ac);px(70,110,14,4,ac);}
+  px(42,112,18,4,bc);px(68,112,18,4,bc);
+  px(34,52,60,44,bc);px(38,56,52,36,pc);
+  if(i>=1){px(42,60,18,10,ac);px(66,60,18,10,ac);}
+  if(i>=3){px(42,74,44,10,ac);}
+  if(i>=4){px(50,62,28,2,ac);}
+  px(20,56,14,34,bc);px(94,56,14,34,bc);
+  if(i>=2){px(20,86,14,4,ac);px(94,86,14,4,ac);}
+  if(i>=1){px(14,86,8,10,ac);px(106,86,8,10,ac);}
+  px(58,44,12,10,bc);px(30,28,68,18,bc);
+  px(61,18,6,12,bc);
+  if(i>=4){px(56,14,16,6,ac);px(61,10,6,6,ac);}
+  else if(i>=2){px(58,14,12,6,ac);}
+  else{px(60,16,8,4,bc);}
+  px(40,32,18,12,pc);px(70,32,18,12,pc);
+  const ec=i>=1?ac:"#888";
+  if(i===0){px(47,37,4,4,"#666");px(77,37,4,4,"#666");}
+  else if(i===1){px(45,36,6,6,ec);px(75,36,6,6,ec);}
+  else if(i===2){px(44,35,8,7,ec);px(74,35,8,7,ec);}
+  else if(i===3){px(43,34,10,8,ec);px(73,34,10,8,ec);ctx.fillStyle="rgba(255,255,255,.35)";ctx.fillRect(43,34,4,4);ctx.fillRect(73,34,4,4);}
+  else{px(42,33,12,10,ec);px(72,33,12,10,ec);ctx.fillStyle=ec+"44";ctx.fillRect(38,30,20,16);ctx.fillRect(68,30,20,16);ctx.fillStyle="rgba(255,255,255,.45)";ctx.fillRect(42,33,5,4);ctx.fillRect(72,33,5,4);}
+  if(i===0){for(let mx=46;mx<=74;mx+=8)px(mx,44,4,2,"#777");}
+  else if(i===1){px(44,44,22,2,ec);}
+  else if(i===2){px(43,44,24,3,ec);}
+  else{px(42,44,26,3,ec);ctx.fillStyle="rgba(255,255,255,.2)";ctx.fillRect(42,44,26,1);}
+  if(i>=3){px(30,34,4,8,ac);px(94,34,4,8,ac);}
+}
+
+function fmtDate(iso){
+  try{return new Date(iso).toLocaleString("hu-HU",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});}
+  catch{return iso;}
+}
+
+function render(d){
+  const c=d.commits||0;
+  const{t,i}=getTier(c);
+  const nxt=TIERS[Math.min(i+1,TIERS.length-1)];
+  const xpN=c-t.min,xpM=nxt.min-t.min;
+  const pct=i>=TIERS.length-1?100:Math.min(100,Math.round(xpN/xpM*100));
+  const tr=TRAITS[Math.min(i,TRAITS.length-1)];
+  const tierHTML=TIERS.map((tier,idx)=>{
+    const on=i>=idx;
+    return`<div class="tier-row" style="opacity:${on?1:0.35}">
+      <span class="tier-dot" style="background:${tier.col}"></span>
+      <span style="min-width:48px;font-weight:500;color:${on?tier.col:"var(--txt3)"}">${tier.name}</span>
+      <span style="color:var(--txt3)">≥ ${tier.min} commit</span>
+      <span style="margin-left:auto;color:var(--txt2);font-size:11px">${tier.desc}</span>
+    </div>`;
+  }).join("");
+
+  document.getElementById("root").innerHTML=`
+    <div class="panel" style="text-align:center">
+      <div style="display:flex;justify-content:center;padding:.75rem 0 .5rem">
+        <canvas id="pc" width="128" height="128" style="width:200px;height:200px"></canvas>
+      </div>
+      <div class="mood">${getMood(c).t}</div>
+      <div class="pname">UNIT-${String(c).padStart(3,"0")}</div>
+      <div><span class="badge" style="background:${t.bg};color:${t.col};border:0.5px solid ${t.col}55">${t.name.toUpperCase()}</span></div>
+      <div style="margin-top:6px">${tr.map(x=>`<span class="chip">${x}</span>`).join("")}</div>
+    </div>
+    <div class="row">
+      <div class="panel col">
+        <div class="sec">Commit XP</div>
+        <div class="stat-big">${c}</div>
+        <div class="stat-sub">commit (${d.window_days||30} nap)</div>
+        <div class="bar-bg"><div class="bar-fill" id="xpbar" style="width:0%;background:${t.col}"></div></div>
+        <div class="xp-lbl">${i>=TIERS.length-1?"MAX SZINT":`XP: ${xpN} / ${xpM} → ${nxt.name}`}</div>
+      </div>
+      <div class="panel col">
+        <div class="sec">Statisztikák</div>
+        <div class="stat-lines">
+          <b>${d.streak||0}</b> napos streak<br>
+          <b>${d.repos||0}</b> aktív repo<br>
+          <b>${d.top_lang||"?"}</b> top nyelv
+        </div>
+      </div>
+    </div>
+    <div class="panel"><div class="sec">Fejlődési szintek</div>${tierHTML}</div>
+    ${d.updated_at?`<div class="updated">frissítve: ${fmtDate(d.updated_at)}</div>`:""}
+  `;
+  drawBot(document.getElementById("pc"),c);
+  requestAnimationFrame(()=>{
+    const bar=document.getElementById("xpbar");
+    if(bar)bar.style.width=pct+"%";
+  });
+}
+
+fetch("data.json?t="+Date.now())
+  .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+  .then(render)
+  .catch(()=>render({commits:0,streak:0,repos:0,top_lang:"?",window_days:30,updated_at:null}));
+</script>
+</body>
+</html>
