@@ -13,7 +13,7 @@ Pixel-art "tamagotchi" a GitHub commit-aktivitásod alapján. Az oldal a `data.j
 | `window_days` | number | Az időablak hossza napokban (alapértelmezett: 30) |
 | `streak` | number | Jelenlegi napi streak (napok) |
 | `repos` | number | Aktív repók száma az időablakban |
-| `top_lang` | string | Legtöbbet használt programozási nyelv |
+| `top_lang` | string | Az owner repóiban leggyakoribb elsődleges nyelv |
 | `updated_at` | string | Utolsó frissítés időpontja ISO 8601 formátumban |
 
 ## Fejlődési szintek (tier-ek)
@@ -38,4 +38,4 @@ A robot hangulata a commitszám alapján változik:
 
 ## Workflow
 
-Az `update-stats.yml` workflow naponta lefut és frissíti a `data.json`-t a GitHub API segítségével, majd commitolja a változást a `main` ágra. A `deploy-pages.yml` az oldalt GitHub Pages-re publikálja.
+Az `update-stats.yml` workflow naponta lefut és frissíti a `data.json`-t a GitHub API segítségével, majd commitolja a változást a `main` ágra. A `deploy-pages.yml` a `main` ágra érkező push eseményekre fut, és az oldalt GitHub Pages-re publikálja.
