@@ -31,7 +31,15 @@ jobs:
 
           user = os.environ["GH_USER"]
           token = os.environ["GH_TOKEN"]
-          pat = os.environ.get("GH_PAT") or token
+          pat = os.environ.get("GH_PAT")
+          if not pat:
+              raise SystemExit(
+                  "GH_PAT secret is not set. The default GITHUB_TOKEN cannot enumerate "
+                  "the owner's other repositories via /user/repos, so the resulting "
+                  "data.json would silently contain only the current repo's commits. "
+                  "Create a classic PAT with the 'repo' scope (or a fine-grained PAT "
+                  "with Contents: Read on all repos) and add it as a GH_PAT secret."
+              )
           days = 30
 
           def gh(url, use_pat=False):
