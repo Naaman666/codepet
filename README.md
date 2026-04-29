@@ -39,3 +39,15 @@ A robot hangulata a commitszám alapján változik:
 ## Workflow
 
 Az `update-stats.yml` workflow naponta lefut és frissíti a `data.json`-t a GitHub API segítségével, majd commitolja a változást a `main` ágra. A `deploy-pages.yml` a `main` ágra érkező push eseményekre fut, és az oldalt GitHub Pages-re publikálja.
+
+## Setup
+
+A workflow-nak szüksége van egy `GH_PAT` repository secretre, mert az alapértelmezett `GITHUB_TOKEN` a `/user/repos` endpointon csak az aktuális repót látja — PAT nélkül a `data.json` csendben hibás adatot kapna (csak a codepet repó commitjai látszanának). Ha a secret hiányzik, a workflow szándékosan elhasal explicit hibaüzenettel.
+
+1. **PAT létrehozása** — GitHub → Settings → Developer settings → Personal access tokens:
+   - **Classic PAT**: `repo` scope (privát repók read access-éhez is).
+   - **Fine-grained PAT**: minden olyan repóra, amit be akarsz számolni, `Contents: Read` permission.
+2. **Secret beállítása** — a codepet repóban: Settings → Secrets and variables → Actions → New repository secret:
+   - Name: `GH_PAT`
+   - Value: a fent létrehozott token.
+3. **Tesztelés** — Actions → Update CodePet stats → Run workflow.
