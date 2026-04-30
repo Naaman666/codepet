@@ -22,7 +22,7 @@ To test data changes, edit `data.json` locally and reload the page.
 
 No build / test / lint pipeline. Manual verification in the browser.
 
-The GitHub Actions workflows handle stats updates and deployment automatically:
+GitHub Actions workflows handle stats updates and deployment automatically:
 - `update-stats.yml` — runs daily, updates `data.json` via the GitHub API and commits to `main`.
 - `deploy-pages.yml` — triggers on push to `main`, publishes to GitHub Pages.
 
@@ -38,12 +38,11 @@ The GitHub Actions workflows handle stats updates and deployment automatically:
 - **Tiers:** determined by commit count (Scrap → Core → Forge → Arc → Apex). Each tier has a distinct colour.
 - **Mood:** driven by commit count thresholds (0 = sleeping, ≥5 = charging, ≥15 = active, ≥30 = turbo, ≥60 = APEX).
 - **Data source:** `data.json` — fields: `user`, `commits`, `window_days`, `streak`, `repos`, `top_lang`, `updated_at`.
-- **Auth:** the `update-stats.yml` workflow requires a `GH_PAT` repository secret (classic PAT with `repo` scope, or fine-grained PAT with `Contents: Read` on all tracked repos).
+- **Auth:** the `update-stats.yml` workflow requires a `GH_PAT` repository secret.
 
 ## Git Workflow
 
-- Always work on the `develop` branch.
-- Never push/commit directly to `main`.
-- Every commit should go to the `develop` branch.
-- Only two branches are used: `develop` (active work) and `main` (stable releases).
-- Do not create feature branches, topic branches, or any other branches.
+Only two persistent branches exist: `develop` (active work) and `main` (stable releases).
+
+- **Humans:** always commit directly to `develop`. Never commit or push to `main`. Do not create feature or topic branches.
+- **AI agents (Claude, Codex, etc.):** open pull requests from a short-lived `claude/*` or `codex/*` branch. The PR must always target `develop`, never `main`. The branch is deleted after merge.
