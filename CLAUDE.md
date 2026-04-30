@@ -4,7 +4,7 @@ This file provides guidance to Claude when working with this repository.
 
 ## Project Overview
 
-BSR CodePet — a pixel-art "tamagotchi" that reflects your GitHub commit activity. The page reads data from `data.json`, which is updated automatically by a GitHub Actions workflow. The pet's tier and mood evolve based on commit count over the last 30 days. **Single `index.html` file, zero dependencies, no build step — deployed via GitHub Pages.**
+CodePet — a pixel-art "tamagotchi" that reflects your GitHub commit activity. The page reads data from `data.json`, which is updated automatically by a GitHub Actions workflow. The pet's tier and mood evolve based on commit count over the last 30 days. **Single `index.html` file, zero dependencies, no build step — deployed via GitHub Pages.**
 
 ## Development Setup
 

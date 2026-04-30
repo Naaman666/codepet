@@ -1,6 +1,6 @@
 [![Update CodePet stats](https://github.com/Naaman666/codepet/actions/workflows/update-stats.yml/badge.svg)](https://github.com/Naaman666/codepet/actions/workflows/update-stats.yml)
 
-# BSR CodePet
+# CodePet
 
 Pixel-art "tamagotchi" a GitHub commit-aktivitásod alapján. Az oldal a `data.json` fájlból olvassa az adatokat, amelyet egy GitHub Actions workflow frissít automatikusan.
 
